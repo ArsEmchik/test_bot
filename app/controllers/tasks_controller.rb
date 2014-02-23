@@ -18,8 +18,8 @@ class TasksController < ApplicationController
 
     if poem
       uri = URI(SERVER_URL)
-      request = Net::HTTP::Post.new(uri)
-      request.post_form(answer: poem.title, token: token, task_id: task_id)
+      parameters = {answer: poem.title, token: token, task_id: task_id}
+      Net::HTTP.post_form(uri, parameters)
     end
 
     render nothing: true
