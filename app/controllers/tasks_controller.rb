@@ -18,7 +18,7 @@ class TasksController < ApplicationController
 
     if poem
       uri = URI(SERVER_URL)
-      parameters = {answer: poem.title, token: token, task_id: task_id}
+      parameters = {answer: poem.title, token: "565c50b9334ebb791bee3b6090581f34", task_id: task_id}
       Net::HTTP.post_form(uri, parameters)
     end
 
@@ -26,4 +26,8 @@ class TasksController < ApplicationController
 
   end
 
+  def result
+    result = params[:result]
+    render nothing: true
+  end
 end
