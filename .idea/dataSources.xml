@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DataSourceManagerImpl" format="xml" hash="2115332254">
-    <data-source source="LOCAL" name="Rails test_bot: development" uuid="ba777bc1-f29a-4a36-a1cc-ccee147ef65e">
+  <component name="DataSourceManagerImpl" format="xml" hash="608753308">
+    <data-source source="LOCAL" name="Rails test_bot: development" uuid="fb636894-5d26-4c77-aa34-c2d50fe3d13b">
       <driver-ref>postgresql</driver-ref>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://127.0.0.1/pushkin-contest_development</jdbc-url>
+      <jdbc-url>jdbc:postgresql://127.0.0.1/test_bot</jdbc-url>
       <user-name>pushkin</user-name>
       <user-password>df9b</user-password>
       <libraries />
     </data-source>
-    <data-source source="LOCAL" name="Rails test_bot: test" uuid="9723a138-5a14-4afa-ae44-d9fc5b89a56d">
+    <data-source source="LOCAL" name="Rails test_bot: test" uuid="0164565c-2806-494e-a0d5-7092182106f3">
       <driver-ref>postgresql</driver-ref>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql:test_bot_test</jdbc-url>
       <user-name>test_bot</user-name>
       <libraries />
     </data-source>
-    <data-source source="LOCAL" name="Rails test_bot: production" uuid="4667de93-6bc1-4a2e-b101-1347f56da7a7">
+    <data-source source="LOCAL" name="Rails test_bot: production" uuid="a312c89a-025a-45f8-b68a-1cab205ae3a1">
       <driver-ref>postgresql</driver-ref>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql:test_bot_production</jdbc-url>

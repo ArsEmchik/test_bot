@@ -1,29 +1,31 @@
 class TasksController < ApplicationController
 
   ANSWER = 'снежные'.freeze
-  SERVER_URL = 'http://localhost:3000/quiz'.freeze
+  SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
 
   def index
-    @token = params[:token]
+    token = Token.new
+    token.token = params[:token]
+    token.save
+
     render text: ANSWER
   end
 
   def quiz
-    level = params[:task_level]
+    token = Token.last
+    #level = params[:task_level]
     question = params[:question]
-    token = params[:token]
     task_id = params[:task_id]
 
     poem = Poem.where('content like ?', "%#{question}%").first
 
     if poem
       uri = URI(SERVER_URL)
-      parameters = {answer: poem.title, token: "565c50b9334ebb791bee3b6090581f34", task_id: task_id}
+      parameters = {answer: poem.title, token: token, task_id: task_id}
       Net::HTTP.post_form(uri, parameters)
     end
 
     render nothing: true
-
   end
 
   def result
