@@ -6,9 +6,11 @@ class TasksController < ApplicationController
   def index
     token = Token.new
     token.token = params[:token]
-    token.save
-
-    render text: ANSWER
+    if token.save
+      render text: ANSWER
+    else
+      render nothing: true
+    end
   end
 
   def quiz
