@@ -1,3 +1,4 @@
+# Encoding: utf-8
 class TasksController < ApplicationController
 
   ANSWER = 'снежные'.freeze
@@ -6,8 +7,10 @@ class TasksController < ApplicationController
   def index
     token = Token.new
     token.token = params[:token]
+
     if token.save
-      render text: ANSWER
+      data = {answer: ANSWER}
+      render text: data.to_json
     else
       render nothing: true
     end
@@ -34,4 +37,5 @@ class TasksController < ApplicationController
     result = params[:result]
     render nothing: true
   end
+
 end

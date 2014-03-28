@@ -47,15 +47,15 @@ development:
 test:
   adapter: postgresql
   encoding: unicode
-  database: test_bot_test
+  database: test_bot
   pool: 5
-  username: test_bot
-  password:
+  username: pushkin
+  password: 1
 
 production:
   adapter: postgresql
   encoding: unicode
-  database: test_bot_production
+  database: test_bot
   pool: 5
-  username: test_bot
-  password:
+  username: pushkin
+  password: 1
