@@ -2,7 +2,9 @@
 class TasksController < ApplicationController
 
   ANSWER = 'снежные'.freeze
-  SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
+  #SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
+  SERVER_URL = 'http://localhost:3000/quiz'.freeze
+
 
   def index
     token = Token.new
@@ -17,10 +19,11 @@ class TasksController < ApplicationController
   end
 
   def quiz
-    token = Token.last
+    token = Token.last.token
     #level = params[:task_level]
+
     question = params[:question]
-    task_id = params[:task_id]
+    task_id = params[:id]
 
     poem = Poem.where('content like ?', "%#{question}%").first
 
