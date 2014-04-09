@@ -2,8 +2,8 @@
 class TasksController < ApplicationController
 
   ANSWER = 'снежные'.freeze
-  #SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
-  SERVER_URL = 'http://localhost:3000/quiz'.freeze
+  SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
+  #SERVER_URL = 'http://localhost:3000/quiz'.freeze
 
 
   def index
