@@ -37,5 +37,36 @@ namespace :db do
       poem.content = text
       poem.save
     end
+
+    fill_rows_table
+  end
+
+  # created by ars
+  def fill_rows_table
+    Row.delete_all
+    count1 = 0
+    count2 = 0
+
+    poems = Poem.all
+    poems.each do |p|
+      count1 += 1
+      next if p.content.empty?
+      count2 += fill_row(p.content)
+    end
+
+    p count1
+    p count2
+  end
+
+  def fill_row(content)
+    row_arr = content.split("\n")
+    count2 = 0
+    row_arr.each do |r|
+      count2 += 1
+      row = Row.new
+      row.content = r
+      row.save
+    end
+    count2
   end
 end
