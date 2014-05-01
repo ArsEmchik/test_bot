@@ -37,7 +37,8 @@ CREATE TABLE poems (
     title character varying(255),
     content text,
     created_at timestamp without time zone,
-    updated_at timestamp without time zone
+    updated_at timestamp without time zone,
+    content_text tsvector
 );
 
 
@@ -181,6 +182,13 @@ CREATE INDEX content_text_gin ON rows USING gin (content_text);
 
 
 --
+-- Name: content_text_index; Type: INDEX; Schema: public; Owner: -; Tablespace: 
+--
+
+CREATE INDEX content_text_index ON poems USING gin (content_text);
+
+
+--
 -- Name: unique_schema_migrations; Type: INDEX; Schema: public; Owner: -; Tablespace: 
 --
 
@@ -191,7 +199,14 @@ CREATE UNIQUE INDEX unique_schema_migrations ON schema_migrations USING btree (v
 -- Name: ts_content_text; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER ts_content_text BEFORE INSERT OR UPDATE ON rows FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger('content_text', 'russian', 'content');
+CREATE TRIGGER ts_content_text BEFORE INSERT OR UPDATE ON rows FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger('content_text', 'pg_catalog.russian', 'content');
+
+
+--
+-- Name: ts_content_text; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER ts_content_text BEFORE INSERT OR UPDATE ON poems FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger('content_text', 'pg_catalog.russian', 'content');
 
 
 --
@@ -206,8 +221,8 @@ INSERT INTO schema_migrations (version) VALUES ('20140323181417');
 
 INSERT INTO schema_migrations (version) VALUES ('20140501081552');
 
-INSERT INTO schema_migrations (version) VALUES ('20140501103447');
-
 INSERT INTO schema_migrations (version) VALUES ('20140501105912');
 
-INSERT INTO schema_migrations (version) VALUES ('20140501110412');
+INSERT INTO schema_migrations (version) VALUES ('20140501115346');
+
+INSERT INTO schema_migrations (version) VALUES ('20140501130314');

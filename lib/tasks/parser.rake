@@ -1,5 +1,6 @@
 namespace :db do
   task :parse => :environment do
+    Poem.delete_all
 
     URL = "http://ilibrary.ru/text/"
 
@@ -38,7 +39,7 @@ namespace :db do
       poem.save
     end
 
-    fill_rows_table
+    #fill_rows_table
   end
 
   # created by ars
@@ -59,10 +60,12 @@ namespace :db do
   end
 
   def fill_row(content)
+    count2 = 0 #for test
+
     row_arr = content.split("\n")
-    count2 = 0
     row_arr.each do |r|
       count2 += 1
+
       row = Row.new
       row.content = r
       row.save
