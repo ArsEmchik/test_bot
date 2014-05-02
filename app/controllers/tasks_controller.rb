@@ -14,9 +14,9 @@ class TasksController < ApplicationController
     if token.save
       data = {answer: ANSWER}
       render text: data.to_json
+    else
+      render nothing: true
     end
-
-    render nothing: true
   end
 
   def quiz(q)
