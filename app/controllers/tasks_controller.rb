@@ -19,7 +19,7 @@ class TasksController < ApplicationController
     end
   end
 
-  def quiz(q)
+  def quiz
     token = Token.last.token
     question = params[:question]
     task_id = params[:id]
