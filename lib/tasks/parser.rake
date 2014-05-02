@@ -39,13 +39,13 @@ namespace :db do
       poem.save
     end
 
-    #fill_rows_table
+    fill_rows_table
   end
 
   # created by ars
   def fill_rows_table
     Row.delete_all
-    p 'идет зазбиение на строки'
+    p 'идет разбиение на строки'
     count1 = 0
     count2 = 0
 

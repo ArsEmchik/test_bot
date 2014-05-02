@@ -18,7 +18,7 @@ class TasksController < ApplicationController
     #  render nothing: true
     #end
 
-    q, a = generate_task5
+    q, a = generate_task4
     p q
     p a
     p '='*20
@@ -31,7 +31,7 @@ class TasksController < ApplicationController
     #question = params[:question]
     #task_id = params[:id]
     question = q
-    level = 5
+    level = 4
 
 
     answer = case (level)
@@ -65,33 +65,37 @@ class TasksController < ApplicationController
   private
 
   def level1(question)
-    poem = Poem.where('content like :question', question: "%#{question}%").limit(1).first.content
+    poem = Poem.where('content like :question', question: "%#{question}%").limit(1).first.title
   end
 
   def level2(question)
     position = get_index_word(question)
-    str_find = get_right_substr(question)
+    substring1, substring2 = get_substr(question)
 
-    row = Row.where('content like :str_find', str_find: "%#{str_find}%").limit(1).first.content
+    row = Row.where('content like :substr1 and content like :substr2', substr1: "%#{substring1}%", substr2: "%#{substring2}%").limit(1).first.content
     find_word(row, position)
   end
 
   def level3(question)
     q_str1, q_str2 = question.split("\n")
+    substring1, substring2 = get_substr(q_str1)
+
     q_str1.gsub!(/[[:punct:]]\z/, '') unless q_str1[-1] == '%'
     q_str2.gsub!(/[[:punct:]]\z/, '') unless q_str2[-1] == '%'
-
-    str_find = get_right_substr(q_str1.length > q_str2.length ? q_str1 : q_str2)
 
     position_word1 = get_index_word(q_str1)
     position_word2 = get_index_word(q_str2)
 
-    poems = Poem.where('content like :str_find', str_find: "%#{str_find}%").limit(1)
+    if position_word1.nil? || position_word2.nil?
+      return 'error index of %WORD% !'
+    end
+
+    poems = Poem.where('content like :substr1 and content like :substr2', substr1: "%#{substring1}%", substr2: "%#{substring2}%").limit(1)
 
     unless poems.nil? || poems.empty?
       arr_str = poems.first.content.split("\n")
       arr_str.each_with_index do |str1, index|
-        if str1.include? get_right_substr(q_str1)
+        if str1.include? substring1 and str1.include? substring2
           str2 = arr_str[index + 1]
 
           str1.gsub!(/[[:punct:]]\z/, '')
@@ -108,18 +112,22 @@ class TasksController < ApplicationController
   def level4(question)
     q_str1, q_str2, q_str3 = question.split("\n")
 
-    str_find = get_right_substr(q_str1.length > q_str2.length ? q_str1 : q_str2)
+    substring1, substring2 = get_substr(q_str1)
 
     position_word1 = get_index_word(q_str1)
     position_word2 = get_index_word(q_str2)
     position_word3 = get_index_word(q_str3)
 
-    poems = Poem.where('content like :str_find', str_find: "%#{str_find}%").limit(1)
+    if position_word1.nil? || position_word2.nil? || position_word2.nil?
+      return 'error index of %WORD% !'
+    end
+
+    poems = Poem.where('content like :substr1 and content like :substr2', substr1: "%#{substring1}%", substr2: "%#{substring2}%").limit(1)
 
     unless poems.nil? || poems.empty?
       arr_str = poems.first.content.split("\n")
       arr_str.each_with_index do |str1, index|
-        if str1.include? get_right_substr(q_str1)
+        if str1.include? substring1 and str1.include? substring2
           str2 = arr_str[index + 1]
           str3 = arr_str[index + 2]
 
@@ -139,23 +147,39 @@ class TasksController < ApplicationController
     words = get_words(question)
     get_words(question).each do |word|
       row = get_row_by_word(word)
+      a = right_row?(row, words, word)
+      find_right_word(row) and break unless row.nil?
     end
   end
 
   private
 
+  def right_row?(row, words, word)
+    words_in_row = row.split(" ")
+    return false unless words_in_row.count == words.count
+
+  end
+
   def get_words(str)
-    str.split(" ").sort_by{|elem| elem.size}.reverse
+    words = str.split(" ")
+    #words.each {|word| word.gsub!(/[[:punct:]]\z/, '')}
+    word.sort_by{|elem| elem.size}.reverse
   end
 
   def get_row_by_word(word)
-    rows = Row.where('content like :str_find', str_find: "%#{str_find}%").limit(1)
+    rows = Row.where('content like :word_find', word_find: "%#{word}%").limit(1)
     rows.first.content unless rows.nil? || rows.empty?
   end
 
-  def get_right_substr(q_str)
-    substring1, substring2 = q_str.split(WORD_STUB)
-    (substring1 || '').length > (substring2 || '').length ? substring1 : substring2
+  def find_right_word(row)
+
+  end
+
+  def get_substr(q_str)
+    arr_substr = q_str.split(WORD_STUB)
+    substring1 = arr_substr[0] || ''
+    substring2 = arr_substr[1] || ''
+    return substring1, substring2
   end
 
   def get_index_word(question_str)
