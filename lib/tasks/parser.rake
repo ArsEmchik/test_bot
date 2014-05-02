@@ -44,6 +44,7 @@ namespace :db do
 
   # created by ars
   def clear_database
+    p 'подговка db'
     Poem.delete_all("title = '' and content = ''")
     poems = Poem.all
     poems.each do |poem|
