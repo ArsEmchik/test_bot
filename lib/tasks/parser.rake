@@ -38,11 +38,22 @@ namespace :db do
       poem.content = text
       poem.save
     end
-
+    clear_database
     fill_rows_table
   end
 
   # created by ars
+  def clear_database
+    Poem.delete_all("title = '' and content = ''")
+    poems = Poem.all
+    poems.each do |poem|
+      id = Poem.where('content = :content', content: poem.content).first.id
+      Poem.delete_all(['content = :content and id > :id', content: poem.content, id: id])
+    end
+  end
+
+
+
   def fill_rows_table
     Row.delete_all
     p 'идет разбиение на строки'

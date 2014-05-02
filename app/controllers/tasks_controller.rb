@@ -1,40 +1,30 @@
 # Encoding: utf-8
 class TasksController < ApplicationController
 
-  WORD_STUB = "%WORD%".freeze # test
+  WORD_STUB = "%WORD%".freeze
   ANSWER = 'снежные'.freeze
-  #SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
-  SERVER_URL = 'http://localhost:3000/quiz'.freeze
+  SERVER_URL = 'http://pushkin-contest.ror.by/quiz'.freeze
+  #SERVER_URL = 'http://localhost:3000/quiz'.freeze
 
 
   def index
-    #token = Token.new
-    #token.token = params[:token]
-    #
-    #if token.save
-    #  data = {answer: ANSWER}
-    #  render text: data.to_json
-    #else
-    #  render nothing: true
-    #end
+    token = Token.new
+    token.token = params[:token]
 
-    q, a = generate_task4
-    p q
-    p a
-    p '='*20
-    p quiz(q)
+    if token.save
+      data = {answer: ANSWER}
+      render text: data.to_json
+    end
+
     render nothing: true
   end
 
   def quiz(q)
-    #token = Token.last.token
-    #question = params[:question]
-    #task_id = params[:id]
-    question = q
-    level = 4
+    token = Token.last.token
+    question = params[:question]
+    task_id = params[:id]
 
-
-    answer = case (level)
+    answer = case (params[:level])
                when 1 then
                  level1(question)
                when 2 then
@@ -44,21 +34,19 @@ class TasksController < ApplicationController
                when 4 then
                  level4(question)
                when 5
-                 5
+                 level5(question)
                else
                  nil
              end
 
-    answer ||= 'noting'
-    p answer
-    answer.mb_chars.downcase.to_s
-    #if answer
-    #  uri = URI(SERVER_URL)
-    #  parameters = {answer: answer, token: token, task_id: task_id}
-    #  Net::HTTP.post_form(uri, parameters)
-    #end
+    answer ||= 'nothing'
+    result = answer.mb_chars.downcase.to_s
 
-    #render nothing: true
+    uri = URI(SERVER_URL)
+    parameters = {answer: result, token: token, task_id: task_id}
+    Net::HTTP.post_form(uri, parameters)
+
+    render nothing: true
   end
 
 
@@ -145,34 +133,72 @@ class TasksController < ApplicationController
 
   def level5(question)
     words = get_words(question)
+
     get_words(question).each do |word|
-      row = get_row_by_word(word)
-      a = right_row?(row, words, word)
-      find_right_word(row) and break unless row.nil?
+      next if word.length <= 3
+      row = ''
+      index = 0
+      prev_index = -1
+      while index <= 33647
+        break if prev_index == index
+
+        row, id = get_row_by_word(word, index)
+        break if row.nil?
+
+        return find_answer(row, words) if right_row?(row, words)
+
+        prev_index = index
+        index = id
+        p index
+        p id
+        p prev_index
+      end
     end
+    nil
   end
 
   private
 
-  def right_row?(row, words, word)
-    words_in_row = row.split(" ")
-    return false unless words_in_row.count == words.count
+  #for level 5
+  def right_row?(row, words)
+    words_in_row = get_words(row)
+    words_count = words.count
+    return false unless row.split(" ").count == words_count
 
+    count = 0
+    words.each do |word|
+      count += 1 unless words_in_row.index(word).nil?
+    end
+    count >= words_count - 1 ? true : false
   end
 
+  # for level 5
   def get_words(str)
     words = str.split(" ")
-    #words.each {|word| word.gsub!(/[[:punct:]]\z/, '')}
-    word.sort_by{|elem| elem.size}.reverse
+    words.each { |word| word.gsub!(/[[:punct:]]\z/, '') }
+    words.sort_by { |elem| elem.size }.reverse
   end
 
-  def get_row_by_word(word)
-    rows = Row.where('content like :word_find', word_find: "%#{word}%").limit(1)
-    rows.first.content unless rows.nil? || rows.empty?
+  #for level 5
+  def find_answer(row, words)
+    words_in_row = get_words(row)
+    word_found = ''
+    words.each do |word|
+      if words_in_row.index(word).nil?
+        word_found = word
+      else
+        words_in_row.delete(word)
+      end
+    end
+    return words_in_row.first + ',' + word_found
   end
 
-  def find_right_word(row)
-
+  #for level 5
+  def get_row_by_word(word, id)
+    rows = Row.where('content like :word_find and id > :id', word_find: "%#{word}%", id: id).limit(1)
+    unless rows.nil? || rows.empty?
+      return rows.first.content, rows.first.id
+    end
   end
 
   def get_substr(q_str)
@@ -204,92 +230,4 @@ class TasksController < ApplicationController
     result = params[:result]
     render nothing: true
   end
-
-
-  # ================= for test from pc ==================
-  def words_to_answer(words)
-    words.map { |word| word.mb_chars.downcase.to_s }.join(',')
-  end
-
-  def pick_word(string)
-    words = string.to_s.split(/\s/)
-    strip_punctuation words.sample
-  end
-
-  alias_method :pick_words, :pick_word
-
-  def pick_line(string, number=1)
-    lines = string.split("\n")
-    start = lines.size >= number ? rand(0..lines.size-number) : 0
-    lines[start...start+number]
-  end
-
-  alias_method :pick_lines, :pick_line
-
-  def strip_punctuation(string)
-    string.strip.gsub(/[[:punct:]]\z/, '')
-  end
-
-  # level 1
-  def generate_task1
-    poem = Poem.where("title NOT ILIKE ?", '%*%').last #random
-    line = strip_punctuation pick_line(poem.content).first
-
-    return line, strip_punctuation(poem.title.downcase)
-  end
-
-  #level 2
-  def generate_task2
-    poem = Poem.last #random
-
-    line = strip_punctuation pick_line(poem.content).first
-    word = pick_word(line)
-
-    q = line.sub(word, WORD_STUB)
-    a = strip_punctuation(words_to_answer([word]))
-
-    return q, a
-  end
-
-  def generate_task3
-    poem = Poem.last #random
-
-    lines = pick_lines poem.content, 2
-    words = lines.map { |line| pick_word(line) }
-    question = words.map.with_index { |word, index| lines[index].sub(word, WORD_STUB) }.join("\n")
-
-    return question, strip_punctuation(words_to_answer(words))
-  end
-
-  def generate_task4
-    poem = Poem.last #random
-
-    lines = pick_lines poem.content, 3
-    words = lines.map {|line| pick_word(line) }
-    question = words.map.with_index { |word, index| lines[index].sub(word, WORD_STUB) }.join("\n")
-
-    return question, strip_punctuation(words_to_answer(words))
-  end
-
-  def generate_task5
-    poem = Poem.random.first
-
-    line = strip_punctuation pick_line(poem.content).first
-    word = pick_word(line)
-
-    return line.sub(word, random_word), strip_punctuation(words_to_answer([word, random_word]))
-  end
-
-  def random_word
-    @random_word ||= generate_random_word
-  end
-
-  protected
-
-  def generate_random_word
-    poem = Poem.last
-    line = pick_line(poem.content).first
-    pick_word(line)
-  end
-
 end
