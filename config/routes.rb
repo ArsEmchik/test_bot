@@ -58,6 +58,4 @@ TestBot::Application.routes.draw do
   post '/registration', to: 'tasks#index'
   post '/quiz', to: 'tasks#quiz'
   post '/result', to: 'tasks#result'
-
-
 end

@@ -18,7 +18,7 @@ class TasksController < ApplicationController
     #  render nothing: true
     #end
 
-    q, a = generate_task5
+    q, a = generate_task3
     p q
     p a
     p '='*20
@@ -31,7 +31,7 @@ class TasksController < ApplicationController
     #question = params[:question]
     #task_id = params[:id]
     question = q
-    level = 5
+    level = 3
 
 
     answer = case (level)
@@ -42,7 +42,7 @@ class TasksController < ApplicationController
                when 3 then
                  level3(question)
                when 4 then
-                 level4(question)
+                 4
                when 5
                  5
                else
@@ -65,15 +65,16 @@ class TasksController < ApplicationController
   private
 
   def level1(question)
-    poem = Poem.where('content like :question', question: "%#{question}%").limit(1).first.content
+    str_sql, position = prepare_str(question)
+    poems = Poem.where("content_text @@ to_tsquery('pg_catalog.russian', '#{str_sql}')").limit(1)
+    poems.first.title unless poems.nil? || poems.empty?
   end
 
   def level2(question)
-    position = get_index_word(question)
-    str_find = get_right_substr(question)
+    str_sql, position = prepare_str(question)
+    rows = Row.where("content_text @@ to_tsquery('pg_catalog.russian', '#{str_sql}')").limit(1)
 
-    row = Row.where('content like :str_find', str_find: "%#{str_find}%").limit(1).first.content
-    find_word(row, position)
+    find_word(rows.first.content, position) unless rows.nil? || rows.empty?
   end
 
   def level3(question)
@@ -81,22 +82,25 @@ class TasksController < ApplicationController
     q_str1.gsub!(/[[:punct:]]\z/, '') unless q_str1[-1] == '%'
     q_str2.gsub!(/[[:punct:]]\z/, '') unless q_str2[-1] == '%'
 
-    str_find = get_right_substr(q_str1.length > q_str2.length ? q_str1 : q_str2)
+    str_sql1, position_word1 = prepare_str(q_str1)
+    str_sql2, position_word2 = prepare_str(q_str2)
+    str_sql = str_sql1 + '&' + str_sql2
+    str_sql.slice!('&%WORD%') #костыль
 
-    position_word1 = get_index_word(q_str1)
-    position_word2 = get_index_word(q_str2)
+    substring1, substring2 = q_str1.split(WORD_STUB)
+    substring1 ||= ''
+    substring2 ||= ''
 
-    poems = Poem.where('content like :str_find', str_find: "%#{str_find}%").limit(1)
+    poems = Poem.where("content_text @@ to_tsquery('pg_catalog.russian', '#{str_sql}')").limit(1)
 
     unless poems.nil? || poems.empty?
       arr_str = poems.first.content.split("\n")
+      p arr_str
+      p substring1, substring2
       arr_str.each_with_index do |str1, index|
-        if str1.include? get_right_substr(q_str1)
-          str2 = arr_str[index + 1]
-
-          str1.gsub!(/[[:punct:]]\z/, '')
-          str2.gsub!(/[[:punct:]]\z/, '')
-
+        str1.gsub!(/[[:punct:]]\z/, '')
+        if str1.include? substring1 and str1.include? substring2
+          str2 = arr_str[index + 1].gsub!(/[[:punct:]]\z/, '')
           return find_word(str1, position_word1) + ',' + find_word(str2, position_word2)
         end
       end
@@ -104,73 +108,39 @@ class TasksController < ApplicationController
     nil
   end
 
-
-  def level4(question)
-    q_str1, q_str2, q_str3 = question.split("\n")
-
-    str_find = get_right_substr(q_str1.length > q_str2.length ? q_str1 : q_str2)
-
-    position_word1 = get_index_word(q_str1)
-    position_word2 = get_index_word(q_str2)
-    position_word3 = get_index_word(q_str3)
-
-    poems = Poem.where('content like :str_find', str_find: "%#{str_find}%").limit(1)
-
-    unless poems.nil? || poems.empty?
-      arr_str = poems.first.content.split("\n")
-      arr_str.each_with_index do |str1, index|
-        if str1.include? get_right_substr(q_str1)
-          str2 = arr_str[index + 1]
-          str3 = arr_str[index + 2]
-
-          str1.gsub!(/[[:punct:]]\z/, '')
-          str2.gsub!(/[[:punct:]]\z/, '')
-          str3.gsub!(/[[:punct:]]\z/, '')
-
-          return find_word(str1, position_word1) + ',' + find_word(str2, position_word2) + ',' + find_word(str3, position_word3)
-        end
-      end
-    end
-    nil
-  end
-
-
-  def level5(question)
-    words = get_words(question)
-    get_words(question).each do |word|
-      row = get_row_by_word(word)
-    end
-  end
-
   private
-
-  def get_words(str)
-    str.split(" ").sort_by{|elem| elem.size}.reverse
-  end
-
-  def get_row_by_word(word)
-    rows = Row.where('content like :str_find', str_find: "%#{str_find}%").limit(1)
-    rows.first.content unless rows.nil? || rows.empty?
-  end
-
-  def get_right_substr(q_str)
-    substring1, substring2 = q_str.split(WORD_STUB)
-    (substring1 || '').length > (substring2 || '').length ? substring1 : substring2
-  end
 
   def get_index_word(question_str)
     arr_words = question_str.split(" ")
+    arr_words.index(WORD_STUB)
+  end
+
+  def prepare_str(str)
+    result = ''
+    arr_words = str.split(" ")
     arr_words.each do |word|
-      word.gsub!(/[[:punct:]]\z/, '') unless word[-1] == '%'
+       word.gsub!(/[[:punct:]]\z/, '') unless word[-1] == '%'
     end
-    arr_words.index("%WORD%")
+    position = arr_words.index("%WORD%")
+    a = arr_words.delete("%WORD%")
+    if a.nil?
+      stop = 1
+    end
+
+    arr_words.each do |word|
+      result += word.strip.gsub(/[[:punct:]]\z/, '') + '&'
+    end
+    return result[0..-2], position
   end
 
   def find_word(row, index)
+    p 'find_word'
+    p row
+    p index
     return 'error in find_word' if row.nil? || index.nil?
     arr_words = row.split(" ")
     arr_words.each do |word|
-      word.gsub!(/[[:punct:]]\z/, '')
+      word.strip.gsub(/[[:punct:]]\z/, '')
     end
     return arr_words[index] if index < arr_words.length
     'error in find_word'
@@ -235,37 +205,6 @@ class TasksController < ApplicationController
     question = words.map.with_index { |word, index| lines[index].sub(word, WORD_STUB) }.join("\n")
 
     return question, strip_punctuation(words_to_answer(words))
-  end
-
-  def generate_task4
-    poem = Poem.last #random
-
-    lines = pick_lines poem.content, 3
-    words = lines.map {|line| pick_word(line) }
-    question = words.map.with_index { |word, index| lines[index].sub(word, WORD_STUB) }.join("\n")
-
-    return question, strip_punctuation(words_to_answer(words))
-  end
-
-  def generate_task5
-    poem = Poem.random.first
-
-    line = strip_punctuation pick_line(poem.content).first
-    word = pick_word(line)
-
-    return line.sub(word, random_word), strip_punctuation(words_to_answer([word, random_word]))
-  end
-
-  def random_word
-    @random_word ||= generate_random_word
-  end
-
-  protected
-
-  def generate_random_word
-    poem = Poem.last
-    line = pick_line(poem.content).first
-    pick_word(line)
   end
 
 end
