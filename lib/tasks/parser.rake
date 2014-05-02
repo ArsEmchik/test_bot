@@ -39,7 +39,7 @@ namespace :db do
       poem.save
     end
 
-    fill_rows_table
+    #fill_rows_table
   end
 
   # created by ars
