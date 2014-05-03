@@ -136,16 +136,19 @@ class TasksController < ApplicationController
     words_whit_punct = question.split(" ")
 
     words_whit_punct.each do |word|
-      substring1, substring2 = get_substr(question, word)
-      next if (substring1 == '' &&  substring2 == ' ') || (substring1 == ' ' && substring2 == '') || (substring1 == '' && substring2 == '')
-      rows = Row.where('content like :substr1 and content like :substr2', substr1: "%#{substring1}%", substr2: "%#{substring2}%")
+      index = 0
+      prev_index = -1
+      while index <= 33647
+        break if prev_index == index
 
-      break if rows.nil? || rows.empty?
+        substring1, substring2 = get_substr(question, word)
+        rows = Row.where('content like :substr1 and content like :substr2 and id > :id', substr1: "%#{substring1}%", substr2: "%#{substring2}%", id: index).limit(1)
 
-      rows.each do |row|
-        if right_row?(row.content, words)
-          return find_answer(row.content, words)
-        end
+        break if rows.nil? || rows.empty?
+        return find_answer(rows.first.content, words) if right_row?(rows.first.content, words)
+
+        prev_index = index
+        index = rows.first.id
       end
     end
     nil
