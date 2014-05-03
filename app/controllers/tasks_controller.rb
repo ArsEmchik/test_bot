@@ -133,25 +133,22 @@ class TasksController < ApplicationController
 
   def level5(question)
     words = get_words(question)
+    words_whit_punct = question.split(" ")
 
-    get_words(question).each do |word|
-      next if word.length <= 3
-      row = ''
+    words_whit_punct.each do |word|
       index = 0
       prev_index = -1
       while index <= 33647
         break if prev_index == index
 
-        row, id = get_row_by_word(word, index)
-        break if row.nil?
+        substring1, substring2 = get_substr(question, word)
+        rows = Row.where('content like :substr1 and content like :substr2 and id > :id', substr1: "%#{substring1}%", substr2: "%#{substring2}%", id: index).limit(1)
 
-        return find_answer(row, words) if right_row?(row, words)
+        break if rows.nil? || rows.empty?
+        return find_answer(rows.first.content, words) if right_row?(rows.first.content, words)
 
         prev_index = index
-        index = id
-        p index
-        p id
-        p prev_index
+        index = rows.first.id
       end
     end
     nil
@@ -201,8 +198,8 @@ class TasksController < ApplicationController
     end
   end
 
-  def get_substr(q_str)
-    arr_substr = q_str.split(WORD_STUB)
+  def get_substr(q_str, word=WORD_STUB)
+    arr_substr = q_str.split(word)
     substring1 = arr_substr[0] || ''
     substring2 = arr_substr[1] || ''
     return substring1, substring2
