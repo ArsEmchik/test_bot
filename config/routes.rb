@@ -54,7 +54,7 @@ TestBot::Application.routes.draw do
   #     resources :products
   #   end
 
-  root 'tasks#index'
+  #root 'tasks#index'
   post '/registration', to: 'tasks#index'
   post '/quiz', to: 'tasks#quiz'
   post '/result', to: 'tasks#result'
